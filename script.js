@@ -243,21 +243,68 @@ function renderTasks() {
   taskList.replaceChildren();
 
   for (const task of tasks) {
+    const checkbox = createElement("input", {
+      className: "task-item__checkbox",
+      attributes: {
+        type: "checkbox",
+        checked: task.completed,
+        "aria-label": task.completed
+          ? `Вернуть в активные: ${task.title}`
+          : `Отметить выполненной: ${task.title}`
+      }
+    });
+
+    checkbox.addEventListener("change", () => {
+      task.completed = checkbox.checked;
+      renderTasks();
+    });
+
+    const deleteButton = createElement("button", {
+      className: "task-item__delete",
+      textContent: "Удалить",
+      attributes: {
+        type: "button",
+        "aria-label": `Удалить задачу: ${task.title}`
+      }
+    });
+
+    deleteButton.addEventListener("click", () => {
+      const taskIndex = tasks.findIndex((item) => item.id === task.id);
+
+      if (taskIndex !== -1) {
+        tasks.splice(taskIndex, 1);
+        renderTasks();
+      }
+    });
+
+    const taskDate = createElement("time", {
+      className: "task-item__date",
+      textContent: new Date(`${task.date}T00:00:00`).toLocaleDateString("ru-RU", {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      }),
+      attributes: { datetime: task.date }
+    });
+
     const taskItem = createElement("li", {
-      className: "task-item",
+      className: task.completed
+        ? "task-item task-item--completed"
+        : "task-item",
       children: [
-        createElement("span", {
-          className: "task-item__title",
-          textContent: task.title
+        createElement("div", {
+          className: "task-item__main",
+          children: [
+            checkbox,
+            createElement("span", {
+              className: "task-item__title",
+              textContent: task.title
+            })
+          ]
         }),
-        createElement("time", {
-          className: "task-item__date",
-          textContent: new Date(`${task.date}T00:00:00`).toLocaleDateString("ru-RU", {
-            day: "numeric",
-            month: "long",
-            year: "numeric"
-          }),
-          attributes: { datetime: task.date }
+        createElement("div", {
+          className: "task-item__actions",
+          children: [taskDate, deleteButton]
         })
       ]
     });
