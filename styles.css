@@ -242,3 +242,38 @@ select:focus {
     grid-template-columns: 1fr;
   }
 }
+
+.task-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #e5e9f2;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.task-item__title {
+  overflow-wrap: anywhere;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.task-item__date {
+  flex: none;
+  color: #687797;
+  font-size: 0.875rem;
+}
+
+.empty-state[hidden] {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .task-item {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+}

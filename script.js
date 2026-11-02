@@ -234,3 +234,61 @@ const app = createElement("div", {
 });
 
 document.body.append(app);
+
+const tasks = [];
+const emptyState = document.getElementById("empty-state");
+const taskCount = document.getElementById("task-count");
+
+function renderTasks() {
+  taskList.replaceChildren();
+
+  for (const task of tasks) {
+    const taskItem = createElement("li", {
+      className: "task-item",
+      children: [
+        createElement("span", {
+          className: "task-item__title",
+          textContent: task.title
+        }),
+        createElement("time", {
+          className: "task-item__date",
+          textContent: new Date(`${task.date}T00:00:00`).toLocaleDateString("ru-RU", {
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+          }),
+          attributes: { datetime: task.date }
+        })
+      ]
+    });
+
+    taskList.append(taskItem);
+  }
+
+  emptyState.hidden = tasks.length > 0;
+  taskCount.textContent = `Задач: ${tasks.length}`;
+}
+
+taskForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const title = taskTitleInput.value.trim();
+  const date = taskDateInput.value;
+
+  if (!title || !date) {
+    return;
+  }
+
+  tasks.push({
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    title,
+    date,
+    completed: false
+  });
+
+  renderTasks();
+  taskForm.reset();
+  taskTitleInput.focus();
+});
+
+renderTasks();
