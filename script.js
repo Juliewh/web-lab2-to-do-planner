@@ -393,10 +393,44 @@ function getVisibleTasks() {
   return matchingTasks;
 }
 
+function reorderTasks(draggedId, targetId, insertAfter) {
+  const fromIndex = tasks.findIndex((task) => task.id === draggedId);
+  const targetIndex = tasks.findIndex((task) => task.id === targetId);
+
+  if (
+    fromIndex === -1 ||
+    targetIndex === -1 ||
+    fromIndex === targetIndex
+  ) {
+    return;
+  }
+
+  const [movedTask] = tasks.splice(fromIndex, 1);
+
+  let newIndex = targetIndex;
+
+  if (fromIndex < targetIndex) {
+    newIndex -= 1;
+  }
+
+  if (insertAfter) {
+    newIndex += 1;
+  }
+
+  tasks.splice(newIndex, 0, movedTask);
+  saveTasks();
+  renderTasks();
+}
+
 function renderTasks() {
   taskList.replaceChildren();
   const visibleTasks = getVisibleTasks();
-  
+  const canReorder =
+  editingTaskId === null &&
+  dateSort.value === "manual" &&
+  statusFilter.value === "all" &&
+  searchInput.value.trim() === "";
+
   for (const task of visibleTasks) {
     if (editingTaskId === task.id) {
       taskList.append(
@@ -473,10 +507,18 @@ function renderTasks() {
       className: task.completed
         ? "task-item task-item--completed"
         : "task-item",
+      attributes: {
+        draggable: canReorder ? "true" : "false"
+      },
       children: [
         createElement("div", {
           className: "task-item__main",
           children: [
+            createElement("span", {
+              className: "task-item__drag-handle",
+              textContent: "⋮⋮",
+              attributes: { "aria-hidden": "true" }
+            }),
             checkbox,
             createElement("span", {
               className: "task-item__title",
@@ -490,6 +532,46 @@ function renderTasks() {
         })
       ]
     });
+
+    if (canReorder) {
+      taskItem.addEventListener("dragstart", (event) => {
+        event.dataTransfer.setData("text/plain", task.id);
+        event.dataTransfer.effectAllowed = "move";
+        taskItem.classList.add("task-item--dragging");
+      });
+
+      taskItem.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+
+        taskList
+          .querySelectorAll(".task-item--drop-target")
+          .forEach((item) => item.classList.remove("task-item--drop-target"));
+
+        taskItem.classList.add("task-item--drop-target");
+      });
+
+      taskItem.addEventListener("drop", (event) => {
+        event.preventDefault();
+
+        const draggedId = event.dataTransfer.getData("text/plain");
+
+        if (!draggedId) {
+          return;
+        }
+
+        const bounds = taskItem.getBoundingClientRect();
+        const insertAfter = event.clientY > bounds.top + bounds.height / 2;
+
+        reorderTasks(draggedId, task.id, insertAfter);
+      });
+
+      taskItem.addEventListener("dragend", () => {
+        taskList.querySelectorAll(".task-item").forEach((item) => {
+          item.classList.remove("task-item--dragging", "task-item--drop-target");
+        });
+      });
+    }
 
     taskList.append(taskItem);
   }

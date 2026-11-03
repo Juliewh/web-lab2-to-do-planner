@@ -388,3 +388,30 @@ select:focus {
     flex: 1;
   }
 }
+
+.task-item[draggable="true"] {
+  cursor: grab;
+}
+
+.task-item[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.task-item__drag-handle {
+  flex: none;
+  align-self: center;
+  padding-right: 5px;
+  color: #98a2b5;
+  font-weight: 700;
+  letter-spacing: -0.2em;
+  user-select: none;
+}
+
+.task-item--dragging {
+  opacity: 0.45;
+}
+
+.task-item--drop-target {
+  border-color: #536fce;
+  box-shadow: 0 0 0 2px rgb(83 111 206 / 15%);
+}
