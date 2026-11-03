@@ -236,13 +236,111 @@ const app = createElement("div", {
 document.body.append(app);
 
 const tasks = [];
+let editingTaskId = null;
 const emptyState = document.getElementById("empty-state");
 const taskCount = document.getElementById("task-count");
+
+function createTaskEditor(task) {
+  const titleInput = createElement("input", {
+    attributes: {
+      type: "text",
+      value: task.title,
+      maxlength: 120,
+      required: true,
+      "aria-label": "Название задачи"
+    }
+  });
+
+  const dateInput = createElement("input", {
+    attributes: {
+      type: "date",
+      value: task.date,
+      required: true,
+      "aria-label": "Срок выполнения"
+    }
+  });
+
+  const saveButton = createElement("button", {
+    className: "task-editor__button task-editor__button--save",
+    textContent: "Сохранить",
+    attributes: { type: "submit" }
+  });
+
+  const cancelButton = createElement("button", {
+    className: "task-editor__button task-editor__button--cancel",
+    textContent: "Отмена",
+    attributes: { type: "button" }
+  });
+
+  const editor = createElement("form", {
+    className: "task-editor",
+    children: [
+      createElement("label", {
+        className: "form-field",
+        children: [
+          createElement("span", {
+            className: "form-field__label",
+            textContent: "Название задачи"
+          }),
+          titleInput
+        ]
+      }),
+      createElement("label", {
+        className: "form-field",
+        children: [
+          createElement("span", {
+            className: "form-field__label",
+            textContent: "Срок выполнения"
+          }),
+          dateInput
+        ]
+      }),
+      createElement("div", {
+        className: "task-editor__actions",
+        children: [saveButton, cancelButton]
+      })
+    ]
+  });
+
+  editor.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const title = titleInput.value.trim();
+    const date = dateInput.value;
+
+    if (!title || !date) {
+      return;
+    }
+
+    task.title = title;
+    task.date = date;
+    editingTaskId = null;
+    renderTasks();
+  });
+
+  cancelButton.addEventListener("click", () => {
+    editingTaskId = null;
+    renderTasks();
+  });
+
+  return editor;
+}
 
 function renderTasks() {
   taskList.replaceChildren();
 
   for (const task of tasks) {
+    if (editingTaskId === task.id) {
+      taskList.append(
+        createElement("li", {
+          className: "task-item task-item--editing",
+          children: [createTaskEditor(task)]
+        })
+      );
+
+      continue;
+    }
+
     const checkbox = createElement("input", {
       className: "task-item__checkbox",
       attributes: {
@@ -256,6 +354,20 @@ function renderTasks() {
 
     checkbox.addEventListener("change", () => {
       task.completed = checkbox.checked;
+      renderTasks();
+    });
+
+    const editButton = createElement("button", {
+      className: "task-item__edit",
+      textContent: "Изменить",
+      attributes: {
+        type: "button",
+        "aria-label": `Изменить задачу: ${task.title}`
+      }
+    });
+
+    editButton.addEventListener("click", () => {
+      editingTaskId = task.id;
       renderTasks();
     });
 
@@ -304,7 +416,7 @@ function renderTasks() {
         }),
         createElement("div", {
           className: "task-item__actions",
-          children: [taskDate, deleteButton]
+          children: [taskDate, editButton, deleteButton]
         })
       ]
     });
