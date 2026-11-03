@@ -161,6 +161,7 @@ const dateSort = createElement("select", {
     "aria-label": "Сортировка задач по дате"
   },
   children: [
+    createElement("option", {textContent: "Как добавлены", attributes: { value: "manual" } }),
     createElement("option", { textContent: "Сначала ближайшие", attributes: { value: "ascending" } }),
     createElement("option", { textContent: "Сначала поздние", attributes: { value: "descending" } })
   ]
@@ -364,10 +365,39 @@ function createTaskEditor(task) {
   return editor;
 }
 
+function getVisibleTasks() {
+  const query = searchInput.value.trim().toLowerCase();
+  const selectedStatus = statusFilter.value;
+
+  const matchingTasks = tasks.filter((task) => {
+    const matchesName = task.title.toLowerCase().includes(query);
+
+    const matchesStatus =
+      selectedStatus === "all" ||
+      (selectedStatus === "active" && !task.completed) ||
+      (selectedStatus === "completed" && task.completed);
+
+    return matchesName && matchesStatus;
+  });
+
+  if (dateSort.value === "ascending") {
+    matchingTasks.sort((first, second) =>
+      first.date.localeCompare(second.date)
+    );
+  } else if (dateSort.value === "descending") {
+    matchingTasks.sort((first, second) =>
+      second.date.localeCompare(first.date)
+    );
+  }
+
+  return matchingTasks;
+}
+
 function renderTasks() {
   taskList.replaceChildren();
-
-  for (const task of tasks) {
+  const visibleTasks = getVisibleTasks();
+  
+  for (const task of visibleTasks) {
     if (editingTaskId === task.id) {
       taskList.append(
         createElement("li", {
@@ -464,8 +494,18 @@ function renderTasks() {
     taskList.append(taskItem);
   }
 
-  emptyState.hidden = tasks.length > 0;
-  taskCount.textContent = `Задач: ${tasks.length}`;
+  emptyState.hidden = visibleTasks.length > 0;
+
+  if (tasks.length === 0) {
+    emptyState.textContent = "Пока задач нет. Добавьте первую задачу выше.";
+  } else if (visibleTasks.length === 0) {
+    emptyState.textContent = "Ничего не найдено. Измените поиск или фильтр.";
+  }
+
+  taskCount.textContent =
+    visibleTasks.length === tasks.length
+      ? `Задач: ${tasks.length}`
+      : `Показано: ${visibleTasks.length} из ${tasks.length}`;
 }
 
 taskForm.addEventListener("submit", (event) => {
@@ -490,5 +530,9 @@ taskForm.addEventListener("submit", (event) => {
   taskForm.reset();
   taskTitleInput.focus();
 });
+
+searchInput.addEventListener("input", renderTasks);
+statusFilter.addEventListener("change", renderTasks);
+dateSort.addEventListener("change", renderTasks);
 
 renderTasks();
