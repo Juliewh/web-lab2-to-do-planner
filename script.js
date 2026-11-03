@@ -235,7 +235,44 @@ const app = createElement("div", {
 
 document.body.append(app);
 
-const tasks = [];
+const STORAGE_KEY = "todo-planner-tasks";
+
+function loadTasks() {
+  try {
+    const savedTasks = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+
+    if (!Array.isArray(savedTasks)) {
+      return [];
+    }
+
+    return savedTasks
+      .filter((task) =>
+        task &&
+        typeof task.id === "string" &&
+        typeof task.title === "string" &&
+        typeof task.date === "string"
+      )
+      .map((task) => ({
+        id: task.id,
+        title: task.title,
+        date: task.date,
+        completed: Boolean(task.completed)
+      }));
+  } catch {
+    return [];
+  }
+}
+
+let tasks = loadTasks();
+
+function saveTasks() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  } catch {
+    console.warn("Не удалось сохранить задачи в localStorage.");
+  }
+}
+
 let editingTaskId = null;
 const emptyState = document.getElementById("empty-state");
 const taskCount = document.getElementById("task-count");
@@ -314,6 +351,7 @@ function createTaskEditor(task) {
 
     task.title = title;
     task.date = date;
+    saveTasks();
     editingTaskId = null;
     renderTasks();
   });
@@ -354,6 +392,7 @@ function renderTasks() {
 
     checkbox.addEventListener("change", () => {
       task.completed = checkbox.checked;
+      saveTasks();
       renderTasks();
     });
 
@@ -385,6 +424,7 @@ function renderTasks() {
 
       if (taskIndex !== -1) {
         tasks.splice(taskIndex, 1);
+        saveTasks();
         renderTasks();
       }
     });
@@ -445,6 +485,7 @@ taskForm.addEventListener("submit", (event) => {
     completed: false
   });
 
+  saveTasks();
   renderTasks();
   taskForm.reset();
   taskTitleInput.focus();
