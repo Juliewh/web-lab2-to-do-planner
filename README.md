@@ -26,6 +26,5 @@
 HTML, CSS и чистый JavaScript с использованием DOM API. Сторонние библиотеки и фреймворки не используются.
 
 ## Деплой
-
-
+[Открыть](https://juliewh.github.io/web-lab2-to-do-planner/)
 
